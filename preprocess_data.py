@@ -164,16 +164,6 @@ data = add_momentum(data, decay_rates[0])
 data = add_percentages(data)
 
 #print_feature("end_streak")
-#print_feature("max_streak")
 #print_feature("win_percentage")
 print_feature("avg_off_reb_percentage")
 print(len(data["2003"]["1104"]))
-
-
-
-
-
-
-
-
-
