@@ -4,6 +4,8 @@ import numpy as np
 import math
 from collections import defaultdict
 from matplotlib import pyplot as plt
+from sklearn import preprocessing
+import pickle
 
 def init_feature_vector():
 	dir = "data/"
@@ -156,14 +158,66 @@ def print_feature(feat):
 		for team in data[season]:
 			print("Season: %s\t| Team: %s\t| %s: %s" % (season, team, feat, data[season][team][feat]))
 
+def load_data():
+	data = pickle.load(open("data.p", "rb"))
+	return data
+
+def dump_data(data):
+	pickle.dump(data, open("data.p", "wb"))
+
+def feature_vectorizor(data, feature_list):
+	feature_vec = {}
+	normalize_vec = []
+
+	for season in data:
+		for team in data[season]:
+			for feature in feature_list:
+				if season not in feature_vec:
+					feature_vec[season] = {}
+				if team not in feature_vec[season]:
+					feature_vec[season][team] = []
+				feature_vec[season][team].append(data[season][team][feature])
+
+			normalize_vec.append(feature_vec[season][team])
+
+	# Normalize
+	features_normalized = preprocessing.normalize(normalize_vec)
+
+	i=0
+	#print("Total [season][team]: %s\t| feature_vec: %s" % (len(data)*len(data["2003"]), len(features_normalized)))
+
+	for season in data:
+		for team in data[season]:
+			feature_vec[season][team] = features_normalized[i]
+			i += 1
+
+	return feature_vec
+	
 decay_rates = [1, 1.1, 1.2, 1.3, 1.4, 1.5]
 
-data, header = init_feature_vector()
-data = add_vector_averages(data, header)
-data = add_momentum(data, decay_rates[0])
-data = add_percentages(data)
+feature_list = ['avg_def_reb_percentage', 'avg_score', 'avg_fgm3', 'avg_dr', 'avg_fga3', 'avg_off_reb_percentage', 'end_streak', 'avg_stl', 'avg_ast', 'fg_percentage', 'avg_or', 'momentum', 'avg_fgm', 'fg3_percentage', 'avg_fga', 'win_percentage', 'num_games', 'avg_blk', 'avg_ftm', 'avg_fta', 'max_streak', 'ft_percentage', 'avg_to', 'avg_pf']
+
+#data, header = init_feature_vector()
+#data = add_vector_averages(data, header)
+#data = add_momentum(data, decay_rates[0])
+#data = add_percentages(data)
+
+#dump_data(data)
+
+#data = load_data()
+
+#feature_vec= feature_vectorizor(data, feature_list)
+
+#pickle.dump(feature_vec, open("normalized_feature_vec.p", "wb"))
+
+feature_vec = pickle.load(open("normalized_feature_vec.p"))
+
+print(feature_vec["2003"]["1104"])
 
 #print_feature("end_streak")
 #print_feature("win_percentage")
-print_feature("avg_off_reb_percentage")
-print(len(data["2003"]["1104"]))
+#print_feature("avg_off_reb_percentage")
+#print(data["2003"]["1104"])
+#for label in data["2003"]["1104"]:
+	#print(label)
+	#print(data["2003"]["1104"][label])
