@@ -2,10 +2,11 @@
 
 import numpy as np
 import math
+import re
+import pickle
 from collections import defaultdict
 from matplotlib import pyplot as plt
 from sklearn import preprocessing
-import pickle
 
 def init_feature_vector():
 	dir = "data/"
@@ -16,17 +17,18 @@ def init_feature_vector():
 	with open(detailed_results) as fi:
 		header = fi.readline().rstrip('\r\n').split(',')
 		
-		c = 0
+		#c = 0
 		for lines in fi:
-			c += 1
-			if (c == 4616):
-				break
+			'''c += 1
+			if (c == 4616): # 4616 for 2003 data
+				break'''
 
 			# Parse the line
 			l = lines.rstrip('\r\n').split(',')
 			#print(len(lineinfo))
 
 			season  = l[0]
+			day_num = l[1]
 			w_team  = l[2]
 			w_score = int(l[3])
 			l_team  = l[4]
@@ -61,10 +63,10 @@ def init_feature_vector():
 			for i in range(8, 21):
 				if header[i] not in data[season][w_team]:
 					data[season][w_team][header[i]] = 0
-				if header[i+num_features] not in data[season][l_team]:
+				if header[i] not in data[season][l_team]:
 					data[season][l_team][header[i]] = 0
 
-				data[season][w_team][header[i]]              += int(l[i])
+				data[season][w_team][header[i]] += int(l[i])
 				data[season][l_team][header[i]] += int(l[i+num_features])
 
 			# Winning team additional metrics
@@ -99,6 +101,25 @@ def add_vector_averages(data, header):
 			# Average rebound percentage
 			data[season][team]["avg_off_reb_percentage"] = data[season][team]["total_off_reb"] / float(num_games)
 			data[season][team]["avg_def_reb_percentage"] = data[season][team]["total_def_reb"] / float(num_games)
+
+	return data
+
+def add_seeds(data):
+	seed_data = "data/TourneySeeds.csv"
+
+	with open(seed_data, "rb") as fi:
+		next(fi)
+		for line in fi:
+			season, seed_string, team = line.rstrip('\r\n').split(",")
+			seed = 1 / float(re.findall('\d+', seed_string)[0])
+
+			if int(season) < 2003:
+				continue
+
+			#print("Season: %s\t| seed: %s\t| team: %s" % (season, seed, team))
+
+			data[season][team]["seed_string"] = seed_string
+			data[season][team]["bracket_seed"] = seed
 
 	return data
 
@@ -176,7 +197,12 @@ def feature_vectorizor(data, feature_list):
 					feature_vec[season] = {}
 				if team not in feature_vec[season]:
 					feature_vec[season][team] = []
-				feature_vec[season][team].append(data[season][team][feature])
+
+				if feature not in data[season][team]:
+					#print("data['%s']['%s']: has no %s" % (season, team, feature))
+					feature_vec[season][team].append(-1)
+				else:
+					feature_vec[season][team].append(data[season][team][feature])
 
 			normalize_vec.append(feature_vec[season][team])
 
@@ -195,24 +221,27 @@ def feature_vectorizor(data, feature_list):
 	
 decay_rates = [1, 1.1, 1.2, 1.3, 1.4, 1.5]
 
-feature_list = ['avg_def_reb_percentage', 'avg_score', 'avg_fgm3', 'avg_dr', 'avg_fga3', 'avg_off_reb_percentage', 'end_streak', 'avg_stl', 'avg_ast', 'fg_percentage', 'avg_or', 'momentum', 'avg_fgm', 'fg3_percentage', 'avg_fga', 'win_percentage', 'num_games', 'avg_blk', 'avg_ftm', 'avg_fta', 'max_streak', 'ft_percentage', 'avg_to', 'avg_pf']
+feature_list = ['avg_def_reb_percentage', 'avg_score', 'avg_fgm3', 'avg_dr', 'avg_fga3', 'avg_off_reb_percentage', 'end_streak', 'avg_stl', 'avg_ast', 'fg_percentage', 'avg_or', 'momentum', 'avg_fgm', 'fg3_percentage', 'avg_fga', 'win_percentage', 'num_games', 'avg_blk', 'avg_ftm', 'avg_fta', 'max_streak', 'ft_percentage', 'avg_to', 'avg_pf', 'bracket_seed']
+
 
 #data, header = init_feature_vector()
+data = load_data()
+
 #data = add_vector_averages(data, header)
 #data = add_momentum(data, decay_rates[0])
 #data = add_percentages(data)
+#data = add_seeds(data)
 
 #dump_data(data)
-
-#data = load_data()
+#print(data["2004"]["1104"])
 
 #feature_vec= feature_vectorizor(data, feature_list)
+feature_vec = pickle.load(open("normalized_feature_vec.p"))
 
 #pickle.dump(feature_vec, open("normalized_feature_vec.p", "wb"))
 
-feature_vec = pickle.load(open("normalized_feature_vec.p"))
-
-print(feature_vec["2003"]["1104"])
+for i in range(len(feature_list)):
+	print("%s:\t%s" % (feature_list[i], feature_vec["2003"]["1104"][i]))
 
 #print_feature("end_streak")
 #print_feature("win_percentage")
