@@ -33,7 +33,7 @@ def cross_validate(training_data, training_labels):
 
 
 
-feat_vectors_file = open('normalized_feature_vec.p','rb')
+feat_vectors_file = open('decay_True_normalized_feature_vec.p','rb')
 feat_vectors = pickle.load(feat_vectors_file)
 feat_vectors_file.close()
 
@@ -45,9 +45,14 @@ tuple_file.close()
 
 X = []
 y = []
+j = 0
 for game in feat_labels:
-    X.append(feat_vectors[game[0]][game[1]] + feat_vectors[game[0]][game[2]])
+
+    X.append(list(feat_vectors[game[0]][game[1]]))
+    X[j].extend(list(feat_vectors[game[0]][game[2]]))
     y.append(game[3])
+    j += 1
+
 
 print(X[0])
 

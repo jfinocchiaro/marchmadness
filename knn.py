@@ -16,7 +16,7 @@ def knn(training_data, training_labels, test_data, test_labels, num_nei):
     print(accuracy)
 
 def cross_validate(training_data, training_labels, test_data, test_labels):
-    hyperparams= {'n_neighbors' : [1, 5, 7, 9, 11, 15 ]}
+    hyperparams= {'n_neighbors' : [5, 7, 9, 11, 15 ]}
     nbrs = KNeighborsClassifier()
     gscv = GridSearchCV(nbrs, hyperparams)
     gscv.fit(training_data, training_labels)
@@ -25,7 +25,7 @@ def cross_validate(training_data, training_labels, test_data, test_labels):
     print(gscv.best_estimator_.n_neighbors)
 
 
-feat_vectors_file = open('normalized_feature_vec.p','rb')
+feat_vectors_file = open('decay_True_normalized_feature_vec.p','rb')
 feat_vectors = pickle.load(feat_vectors_file)
 feat_vectors_file.close()
 
@@ -37,11 +37,14 @@ tuple_file.close()
 
 X = []
 y = []
+j = 0
 for game in feat_labels:
-    X.append(feat_vectors[game[0]][game[1]] + feat_vectors[game[0]][game[2]])
-    y.append(game[3])
 
-print(X[0])
+    X.append(list(feat_vectors[game[0]][game[1]]))
+    X[j].extend(list(feat_vectors[game[0]][game[2]]))
+    y.append(game[3])
+    j += 1
+
 
 
 training_data, test_data, training_labels, test_labels = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -50,6 +53,6 @@ print (len(training_labels))
 print (len(test_data))
 print (len(test_labels))
 
-knn(training_data, training_labels, test_data, test_labels, 11)
+#knn(training_data, training_labels, test_data, test_labels, 11)
 
 cross_validate(training_data, training_labels, test_data, test_labels)
