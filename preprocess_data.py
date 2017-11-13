@@ -220,9 +220,9 @@ def feature_vectorizor(data, feature_list):
 	# Normalize
 	features_normalized = preprocessing.normalize(normalize_vec, axis=0)
 
-	i=0
 	#print("Total [season][team]: %s\t| feature_vec: %s" % (len(data)*len(data["2003"]), len(features_normalized)))
 
+	i=0
 	for season in data:
 		for team in data[season]:
 			feature_vec[season][team] = features_normalized[i]
