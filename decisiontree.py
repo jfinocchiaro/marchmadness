@@ -10,8 +10,9 @@ def scorefunc(pred, test_labels):
     for x in range(len(pred)):
         if pred[x] == test_labels[x]:
             score_count += 1
-
     return float(score_count) / len(pred)
+
+
 def decisiontree(training_data, training_labels, test_data, test_labels):
     dt = DecisionTreeClassifier()
     dt.fit(training_data, training_labels)
