@@ -4,8 +4,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split, GridSearchCV
 
-def knn(training_data, training_labels, test_data, test_labels):
-    nbrs = KNeighborsClassifier(n_neighbors=3, algorithm='ball_tree')
+def knn(training_data, training_labels, test_data, test_labels, num_nei):
+    nbrs = KNeighborsClassifier(n_neighbors=num_nei, algorithm='ball_tree')
     nbrs.fit(training_data, training_labels)
 
     predictions = nbrs.predict(test_data)
@@ -24,10 +24,21 @@ def cross_validate(training_data, training_labels, test_data, test_labels):
     print(gscv.best_estimator_.n_neighbors)
 
 
+X = []
+with open('game-by-game-feature-vectors.csv') as f:
+    for line in f.readlines():
+        line = line.rstrip('\n').split(',')
+        line.pop()
+        intline = [float(x) for x in line]
+        X.append(intline)
+y = []
+with open('game-by-game-results.csv') as f:
+    for line in f.readlines():
+        y.append(line.rstrip('\n'))
 
-iris = load_iris()
-X = iris.data[:,:2]
-y = iris.target
+
+print(X[0])
+print(y[0])
 
 training_data, test_data, training_labels, test_labels = train_test_split(X, y, test_size=0.2, random_state=42)
 print (len(training_data))
@@ -35,4 +46,5 @@ print (len(training_labels))
 print (len(test_data))
 print (len(test_labels))
 
+knn(training_data, training_labels, test_data, test_labels, 11)
 cross_validate(training_data, training_labels, test_data, test_labels)
