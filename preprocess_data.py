@@ -259,7 +259,7 @@ def training_tuples(filename):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## Initialize variables
 norm = 50
-decay_rate = 0
+decay_rate = False
 decay_rates = [1, 1.1, 1.2, 1.3, 1.4, 1.5]
 
 feature_list = ['avg_def_reb_percentage', 'avg_score', 'avg_fgm3', 'avg_dr', 'avg_fga3', 'avg_off_reb_percentage', 'end_streak', 'avg_stl', 'avg_ast', 'fg_percentage', 'avg_or', 'momentum', 'avg_fgm', 'fg3_percentage', 'avg_fga', 'win_percentage', 'num_games', 'avg_blk', 'avg_ftm', 'avg_fta', 'max_streak', 'ft_percentage', 'avg_to', 'avg_pf', 'bracket_seed']
@@ -270,10 +270,7 @@ feature_list = ['avg_def_reb_percentage', 'avg_score', 'avg_fgm3', 'avg_dr', 'av
 ## Initialize data
 #data = load_data()
 '''
-if decay_rate == 0:
-	data_file = "data.p"
-else:
-	data_file = "decay_"+str(decay_rate)+"_data.p"
+data_file = "decay_"+str(decay_rate)+"_data.p"
 data = pickle.load(open(data_file))
 '''
 
@@ -291,20 +288,15 @@ data = add_seeds(data)
 ## Dump data
 #dump_data(data)
 #'''
-if decay_rate == 0:
-	data_file = "data.p"
-else:
-	data_file = "decay_"+str(decay_rate)+"_data.p"
+data_file = "decay_"+str(decay_rate)+"_data.p"
 pickle.dump(data, open(data_file, "wb"))
 #'''
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## Initialize feature_vec
-'''if decay_rate == 0:
-	feature_file = "normalized_feature_vec.p"
-else:
-	feature_file = "decay_"+str(decay_rate)+"_normalized_feature_vec.p"
+'''	
+feature_file = "decay_"+str(decay_rate)+"_normalized_feature_vec.p"
 feature_vec = pickle.load(open(feature_file))
 '''
 
@@ -313,10 +305,7 @@ feature_vec= feature_vectorizor(data, feature_list)
 
 ## Dump feature_vec
 #'''
-if decay_rate == 0:
-	feature_file = "normalized_feature_vec.p"
-else:
-	feature_file = "decay_"+str(decay_rate)+"_normalized_feature_vec.p"
+feature_file = "decay_"+str(decay_rate)+"_normalized_feature_vec.p"
 pickle.dump(feature_vec, open(feature_file, "wb"))
 #'''
 
