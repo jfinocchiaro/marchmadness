@@ -6,6 +6,7 @@ def init_feature_vector():
 	detailed_results = "../data/RegularSeasonDetailedResults.csv"
 
 	data = {}
+	head_to_head_data = {}
 	location = {"H": 1, "N": 0, "A": -1}
 	with open(detailed_results) as fi:
 		header = fi.readline().rstrip('\r\n').split(',')
@@ -29,6 +30,18 @@ def init_feature_vector():
 			w_loc   = l[6]
 			#numot  = l[7]
 
+			# Populate head to head key
+			if w_team < l_team:
+				h2h_key = str(w_team) + str(l_team)
+				h2h_score = w_score - l_score
+			else:
+				h2h_key = str(l_team) + str(w_team)
+				h2h_score = l_score - w_score
+			if not h2h_key in list(head_to_head_data.keys()):
+				head_to_head_data[h2h_key] = 0
+			else:
+				head_to_head_data[h2h_key] += h2h_score
+
 			# Init for new keys
 			if season not in data:
 				data[season] = {}
@@ -44,7 +57,7 @@ def init_feature_vector():
 			# Standard metrics for losing team
 			data[season][l_team]["end_streak"]  = 0
 
-	return data, header
+	return data, head_to_head_data
 
 def feature_vectorizor(data, feature_list):
     feature_vec = {}
@@ -69,6 +82,7 @@ def feature_vectorizor(data, feature_list):
     # Normalize
     min_max = MinMaxScaler()
     features_normalized = min_max.fit_transform(normalize_vec)
+
     i=0
     #print("Total [season][team]: %s\t| feature_vec: %s" % (len(data)*len(data["2003"]), len(features_normalized)))
 
@@ -81,23 +95,26 @@ def feature_vectorizor(data, feature_list):
 
 feature_list = ['end_streak', 'max_streak']
 
-data, header = init_feature_vector()
+data, head_to_head_data = init_feature_vector()
 
-print(data['2004'])
-max_streak = 0
-for team in data['2004']:
-    if data['2004'][team]['max_streak'] > max_streak:
-        max_streak = data['2004'][team]['max_streak']
-print(max_streak)
-# #data = load_data()
-#
 feature_vec= feature_vectorizor(data, feature_list)
-max_streak = 0
-for team in feature_vec['2004']:
-    if feature_vec['2004'][team][1] > max_streak:
-        max_streak = feature_vec['2004'][team][1]
-print(max_streak)
-print(feature_vec['2004'])
+
+h2h_keys = []
+h2h_scores = []
+for k, v in head_to_head_data.items():
+	h2h_keys.append(k)
+	h2h_scores.append(v)
+
+# Normalize the head to head dataset
+print(h2h_scores)
+min_max = MinMaxScaler()
+norm_h2h_scores = min_max.fit_transform(h2h_scores)
+
+for i, key in enumerate(h2h_keys):
+	head_to_head_data[key] = norm_h2h_scores[i]
+
+print(head_to_head_data)
 #feature_vec = pickle.load(open("normalized_feature_vec.p"))
 
 pickle.dump(feature_vec, open("pickled_files/normalized_feature_vec.p", "wb"))
+pickle.dump(head_to_head_data, open("pickled_files/head_to_head_data.p", "wb"))
