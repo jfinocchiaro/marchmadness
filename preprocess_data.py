@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import math
@@ -20,8 +20,8 @@ def init_feature_vector(decay_rate=0, norm=50):
 
 	data = {}
 	location = {"H": 1, "N": 0, "A": -1}
-	with open(detailed_results) as fi:
-		header = fi.readline().rstrip('\r\n').split(',')
+	with open(detailed_results, 'rb') as fi:
+		header = fi.readline().decode('utf-8').rstrip('\r\n').split(',')
 		
 		#c = 0
 		for lines in fi:
@@ -30,7 +30,7 @@ def init_feature_vector(decay_rate=0, norm=50):
 				break'''
 
 			# Parse the line
-			l = lines.rstrip('\r\n').split(',')
+			l = lines.decode('utf-8').rstrip('\r\n').split(',')
 			#print(len(lineinfo))
 
 			season  = l[0]
@@ -121,7 +121,7 @@ def add_seeds(data):
 	with open(seed_data, "rb") as fi:
 		next(fi)
 		for line in fi:
-			season, seed_string, team = line.rstrip('\r\n').split(",")
+			season, seed_string, team = line.decode('utf-8').rstrip('\r\n').split(",")
 			seed = 1 / float(re.findall('\d+', seed_string)[0])
 
 			if int(season) < 2003:
@@ -238,7 +238,7 @@ def training_tuples(filename):
 
 		for lines in fi:
 			# Parse the line
-			l = lines.rstrip('\r\n').split(',')
+			l = lines.decode('utf-8').rstrip('\r\n').split(',')
 			#print(len(lineinfo))
 
 			season  = l[0]
@@ -259,7 +259,7 @@ def training_tuples(filename):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## Initialize variables
 norm = 50
-decay_rate = False
+decay_rate = True
 decay_rates = [1, 1.1, 1.2, 1.3, 1.4, 1.5]
 
 feature_list = ['avg_def_reb_percentage', 'avg_score', 'avg_fgm3', 'avg_dr', 'avg_fga3', 'avg_off_reb_percentage', 'end_streak', 'avg_stl', 'avg_ast', 'fg_percentage', 'avg_or', 'momentum', 'avg_fgm', 'fg3_percentage', 'avg_fga', 'win_percentage', 'num_games', 'avg_blk', 'avg_ftm', 'avg_fta', 'max_streak', 'ft_percentage', 'avg_to', 'avg_pf', 'bracket_seed']
@@ -313,19 +313,19 @@ pickle.dump(feature_vec, open(feature_file, "wb"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## Initialize Season data queries
 season_file = "data/RegularSeasonDetailedResults.csv"
-#results = training_tuples(season_file)
+results = training_tuples(season_file)
 #results = pickle.load(open("season_tuples.p"))
 
-#pickle.dump(results, open("season_tuples.p", "wb"))
+pickle.dump(results, open("season_tuples.p", "wb"))
 #print(results)
 #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 ## Initialize Bracket data queries
 bracket_file = "data/TourneyDetailedResults.csv"
-#results = training_tuples(bracket_file)
+results = training_tuples(bracket_file)
 #results = pickle.load(open("bracket_tuples.p"))
 
-#pickle.dump(results, open("bracket_tuples.p", "wb"))
+pickle.dump(results, open("bracket_tuples.p", "wb"))
 #print(results)
 
 
