@@ -4,6 +4,8 @@ import numpy as np
 import math
 import re
 import pickle
+import random
+
 from collections import defaultdict
 from matplotlib import pyplot as plt
 from sklearn import preprocessing
@@ -219,6 +221,31 @@ def feature_vectorizor(data, feature_list):
 
 	return feature_vec
 	
+def training_tuples(filename):
+
+	results = []
+	with open(filename, "rb") as fi:
+		next(fi)
+
+		for lines in fi:
+			# Parse the line
+			l = lines.rstrip('\r\n').split(',')
+			#print(len(lineinfo))
+
+			season  = l[0]
+			day_num = l[1]
+			w_team  = l[2]
+			w_score = int(l[3])
+			l_team  = l[4]
+			l_score = int(l[5])
+
+			if random.random() < 0.5:
+				results.append((season, w_team, l_team, 1))
+			else:
+				results.append((season, l_team, w_team, 0))
+
+	return results		
+
 decay_rates = [1, 1.1, 1.2, 1.3, 1.4, 1.5]
 
 feature_list = ['avg_def_reb_percentage', 'avg_score', 'avg_fgm3', 'avg_dr', 'avg_fga3', 'avg_off_reb_percentage', 'end_streak', 'avg_stl', 'avg_ast', 'fg_percentage', 'avg_or', 'momentum', 'avg_fgm', 'fg3_percentage', 'avg_fga', 'win_percentage', 'num_games', 'avg_blk', 'avg_ftm', 'avg_fta', 'max_streak', 'ft_percentage', 'avg_to', 'avg_pf', 'bracket_seed']
@@ -240,13 +267,21 @@ feature_vec = pickle.load(open("normalized_feature_vec.p"))
 
 #pickle.dump(feature_vec, open("normalized_feature_vec.p", "wb"))
 
-for i in range(len(feature_list)):
-	print("%s:\t%s" % (feature_list[i], feature_vec["2003"]["1104"][i]))
+season_file = "data/RegularSeasonDetailedResults.csv"
+#results = training_tuples(season_file)
+results = pickle.load(open("season_tuples.p"))
 
-#print_feature("end_streak")
-#print_feature("win_percentage")
-#print_feature("avg_off_reb_percentage")
-#print(data["2003"]["1104"])
-#for label in data["2003"]["1104"]:
-	#print(label)
-	#print(data["2003"]["1104"][label])
+#pickle.dump(results, open("season_tuples.p", "wb"))
+print(results)
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
+bracket_file = "data/TourneyDetailedResults.csv"
+#results = training_tuples(season_file)
+results = pickle.load(open("bracket_tuples.p"))
+
+#pickle.dump(results, open("bracket_tuples.p", "wb"))
+print(results)
+
+#for i in range(len(feature_list)):
+	#print("%s:\t%s" % (feature_list[i], feature_vec["2003"]["1104"][i]))
+
