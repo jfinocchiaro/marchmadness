@@ -238,7 +238,7 @@ def training_tuples(filename):
 
 		for lines in fi:
 			# Parse the line
-			l = lines.rstrip('\r\n').split(',')
+			l = lines.decode('utf-8').rstrip('\r\n').split(',')
 			#print(len(lineinfo))
 
 			season  = l[0]
@@ -313,19 +313,19 @@ pickle.dump(feature_vec, open(feature_file, "wb"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## Initialize Season data queries
 season_file = "data/RegularSeasonDetailedResults.csv"
-#results = training_tuples(season_file)
+results = training_tuples(season_file)
 #results = pickle.load(open("season_tuples.p"))
 
-#pickle.dump(results, open("season_tuples.p", "wb"))
+pickle.dump(results, open("season_tuples.p", "wb"))
 #print(results)
 #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 ## Initialize Bracket data queries
 bracket_file = "data/TourneyDetailedResults.csv"
-#results = training_tuples(bracket_file)
+results = training_tuples(bracket_file)
 #results = pickle.load(open("bracket_tuples.p"))
 
-#pickle.dump(results, open("bracket_tuples.p", "wb"))
+pickle.dump(results, open("bracket_tuples.p", "wb"))
 #print(results)
 
 
