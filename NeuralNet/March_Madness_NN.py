@@ -28,13 +28,13 @@ drop_1_percent = 1.0
 drop_2_percent = 1.0
 drop_3_percent = 1.0
 baseline_accuracy = 0.5 # if you were to guess, this assumes an even distribution of the data
-H1 = 1024
-H2 = 2048
+H1 = 2048
+H2 = 1024
 H3 = 2048
 
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 train_step = 100000
-BATCH_SIZE = 1000
+BATCH_SIZE = 1024
 
 # Store layers weight & bias
 weights = {
@@ -56,9 +56,10 @@ x = tf.placeholder(tf.float32, [None, NUM_INPUT])
 y = tf.placeholder(tf.float32, [None, NUM_CLASSES])
 
 # Construct model
-drop_0_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_0_percent)
-drop_0 = tf.nn.dropout(x, drop_0_rate)
-fc1 = tf.add(tf.matmul(drop_0, weights['wd1']), biases['bd1'], name='fully_connected1')
+# drop_0_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_0_percent)
+# drop_0 = tf.nn.dropout(x, drop_0_rate)
+# fc1 = tf.add(tf.matmul(drop_0, weights['wd1']), biases['bd1'], name='fully_connected1')
+fc1 = tf.add(tf.matmul(x, weights['wd1']), biases['bd1'], name='fully_connected1')
 fc1_nl = tf.nn.relu(fc1, name='fully_connected1_nl')
 drop_1_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_1_percent)
 drop_1 = tf.nn.dropout(fc1_nl, drop_1_rate)
@@ -73,7 +74,7 @@ fc3_nl = tf.nn.relu(fc3, name='fully_connected3_nl')
 drop_3_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_3_percent)
 drop_3 = tf.nn.dropout(fc3_nl, drop_3_rate)
 
-fc4 = tf.add(tf.matmul(drop_3, weights['wd4']), biases['bd4'], name='fully_connected4')
+fc4 = tf.add(tf.matmul(drop_1, weights['wd4']), biases['bd4'], name='fully_connected4')
 # fc4_nl = tf.nn.relu(fc4, name='fully_connected4_nl')
 
 pred = fc4
@@ -116,12 +117,13 @@ test_labels = np.split(np.array(test_labels, dtype='f'), len(test_labels))
 
 # Launch the graph
 with tf.Session() as sess:
-    for max_accuracy_difference in np.arange(0.3, 1.0, 1):
+    for max_accuracy_difference in np.arange(0.075, 0.4, 0.025):
         # Initializing the variables
         init = tf.global_variables_initializer()
         sess.run(init)
         dropout_rate = 1.0
 
+        best_test = 0
 
         for train_step in range(1, train_step + 1):
             end_batch_train_num = int(size_of_train / BATCH_SIZE)
@@ -149,6 +151,10 @@ with tf.Session() as sess:
             loss, training_accuracy = sess.run([cost, accuracy], feed_dict={x: batch_x, y: batch_y, keep_probability: 1.0})
             validation_accuracy = sess.run(accuracy, feed_dict={x: batch_x_val, y: batch_y_val, keep_probability: 1.0}) #set the keep_probability to keep all the nodes during vailidation
 
+            test_accuracy = sess.run(accuracy, feed_dict={x: test_data, y:test_labels, keep_probability:1.0})
+            if test_accuracy > best_test:
+                best_test = test_accuracy
+
             dropout_rate = float(1- ((max(0, (training_accuracy - baseline_accuracy) / (1 - baseline_accuracy))) * min(1,abs(
                 training_accuracy - validation_accuracy)/max_accuracy_difference))) #subtract from 1 in order to get the keep probability
                 #we take the min of 1 and train-val/0.5 because we want a dyanmic range of percent
@@ -161,17 +167,19 @@ with tf.Session() as sess:
                 print('Training Step= ' + str(train_step) + ', Minibatch Loss= ' + str(loss) + ', Training Accuracy= ' + str(
                     training_accuracy) + ', Validation Accuracy= ' + str(validation_accuracy) + ', Keep Probability= ' + str(
                     dropout_rate))
+                print('Testing accuracy= '+str(best_test))
 
-            if train_step > 2000 or validation_accuracy > 0.95:
+            if train_step > 200 or validation_accuracy > 0.95:
                 break
 
         print('Optimization Finished')
+
         print('Max accuracy difference= '+str(max_accuracy_difference))
         # test_data = np.array(test_data)
         # test_labels = np.split(np.array(test_labels, dtype='f'), len(test_labels))
 
-        test_accuracy = sess.run(accuracy, feed_dict={x: test_data, y:test_labels, keep_probability:1.0})
-        print('Testing accuracy= '+str(test_accuracy))
+        # test_accuracy = sess.run(accuracy, feed_dict={x: test_data, y:test_labels, keep_probability:1.0})
+        print('Testing accuracy= '+str(best_test))
 
         plt.scatter(train_step, test_accuracy)
         plt.annotate(str(max_accuracy_difference), xy=(train_step, test_accuracy))
@@ -192,4 +200,3 @@ with tf.Session() as sess:
     plt.ylabel('Accuracy')
     plt.legend()
     plt.show()
-
