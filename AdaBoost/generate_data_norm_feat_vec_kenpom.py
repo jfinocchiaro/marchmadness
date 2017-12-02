@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 # Load the dataset
-feature_vec_fname = 'pickled_files/normalized_feature_vec.p'
+feature_vec_fname = 'pickled_files/decay_True_normalized_feature_vec.p'
 season_tuples_fname = 'pickled_files/season_tuples.p'
 kenpom_fname = '../data/kenpom.csv'
 teams_fname = '../data/Teams.csv'
@@ -118,6 +118,7 @@ training_data, test_data, training_labels, test_labels = train_test_split(train_
 # Troubleshoot
 print(season_tuples[0])
 print(train_x[0])
+print(len(train_x[0]))
 print(train_y[0])
 
 # Dump data to different pickled files

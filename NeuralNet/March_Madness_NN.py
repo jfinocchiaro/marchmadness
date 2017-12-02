@@ -1,125 +1,170 @@
 import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import sys
+import argparse
 import tensorflow as tf
 import numpy as np
+import random
+import matplotlib.pyplot as plt
 import pickle
+from sklearn.model_selection import train_test_split
 
-# Parameters
-learning_rate = 0.005
-epochs = 1000
-batch_size = 128
-display_step = 100
 
-# Network Parameters
-n_hidden_1 = 512
-n_hidden_2 = 256
-teamfeaturevectors = 50
-num_classes = 1
+def shuffle(images, labels):
+    all_data = list(zip(images, labels))
+    random.shuffle(all_data)
+    x, y = zip(*all_data)
+    images = np.array(x)
+    labels = np.array(y)
+    return images, labels
 
-# tf Graph input
-X = tf.placeholder("float", [None, teamfeaturevectors])
-Y = tf.placeholder("float", [None, num_classes])
+display_step = 1
+NUM_INPUT = 70
+NUM_CLASSES = 1
+keep_probability = tf.placeholder(tf.float32)
+drop_0_percent = 1.0 #the amount to take reduce the dropout for each layer
+drop_1_percent = 1.0
+drop_2_percent = 1.0
+drop_3_percent = 1.0
+baseline_accuracy = 0.5 # if you were to guess, this assumes an even distribution of the data
+H1 = 1024
+H2 = 2048
+H3 = 2048
+
+LEARNING_RATE = 0.01
+train_step = 100000
+BATCH_SIZE = 100
 
 # Store layers weight & bias
 weights = {
-    'X': tf.Variable(tf.random_normal([teamfeaturevectors, n_hidden_1])),
-
-    'h1': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
-
-    'out': tf.Variable(tf.random_normal([n_hidden_2, num_classes]))
+    'wd1': tf.Variable(tf.random_normal([NUM_INPUT, H1])),
+    'wd2': tf.Variable(tf.random_normal([H1, H2])),
+    'wd3': tf.Variable(tf.random_normal([H2, H3])),
+    'wd4': tf.Variable(tf.random_normal([H3, NUM_CLASSES]))
 }
+
 biases = {
-    'X': tf.Variable(tf.random_normal([n_hidden_1])),
-    'h1': tf.Variable(tf.random_normal([n_hidden_2])),
-    'out': tf.Variable(tf.random_normal([num_classes]))
+    'bd1': tf.Variable(tf.random_normal([H1])),
+    'bd2': tf.Variable(tf.random_normal([H2])),
+    'bd3': tf.Variable(tf.random_normal([H3])),
+    'bd4': tf.Variable(tf.random_normal([NUM_CLASSES]))
 }
 
-def prepare(raw, queries):
-    data = []
-    labels = []
-    count = 0
-    for tup in queries:
-        count += 1
-        if count == 3000:
-            break
-        season = tup[0]
-        teamANum = tup[1]
-        teamBNum = tup[2]
-        teamAResult= tup[3]
+# tf Graph input
+x = tf.placeholder(tf.float32, [None, NUM_INPUT])
+y = tf.placeholder(tf.float32, [None, NUM_CLASSES])
 
-        teamAFeatures = raw[season][teamANum]
-        teamBFeatures = raw[season][teamBNum]
+# Construct model
+drop_0_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_0_percent)
+drop_0 = tf.nn.dropout(x, drop_0_rate)
+fc1 = tf.add(tf.matmul(drop_0, weights['wd1']), biases['bd1'], name='fully_connected1')
+fc1_nl = tf.nn.relu(fc1, name='fully_connected1_nl')
+drop_1_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_1_percent)
+drop_1 = tf.nn.dropout(fc1_nl, drop_1_rate)
 
-        X = np.concatenate((teamAFeatures,teamBFeatures))
+fc2 = tf.add(tf.matmul(drop_1, weights['wd2']), biases['bd2'], name='fully_connected2')
+fc2_nl = tf.nn.relu(fc2, name='fully_connected2_nl')
+drop_2_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_2_percent)
+drop_2 = tf.nn.dropout(fc2_nl, drop_2_rate)
 
-        data.append(X)
-        labels.append([teamAResult])
-    return data, labels
+fc3 = tf.add(tf.matmul(drop_2, weights['wd3']), biases['bd3'], name='fully_connected3')
+fc3_nl = tf.nn.relu(fc3, name='fully_connected3_nl')
+drop_3_rate = tf.minimum(tf.constant(1.0), keep_probability*drop_3_percent)
+drop_3 = tf.nn.dropout(fc3_nl, drop_3_rate)
 
-def neural_net():
-    # Create model
-    # Hidden fully connected layer with some number of neurons
-    layer_X = tf.nn.sigmoid(tf.add(tf.matmul(X, weights['X']), biases['X']))
+fc4 = tf.add(tf.matmul(drop_3, weights['wd4']), biases['bd4'], name='fully_connected4')
+# fc4_nl = tf.nn.relu(fc4, name='fully_connected4_nl')
 
-    layer_hidden1 = tf.nn.sigmoid(tf.add(tf.matmul(layer_X, weights['h1']), biases['h1']))
+pred = fc4
+guess = tf.round(tf.nn.sigmoid(pred))
 
-    # Output fully connected layer with a neuron for each class
-    # out_layer = tf.nn.sigmoid(tf.matmul(layer_hidden, weights['out']) + biases['out'])
-    return tf.matmul(layer_hidden1, weights['out']) + biases['out']
 
 # Define loss and optimizer
-logits = neural_net()
-prediction =  tf.round(tf.nn.sigmoid(logits))
-
-loss_op = tf.losses.mean_squared_error(logits, Y)
-# loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-#     logits=logits, labels=Y))
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-train_op = optimizer.minimize(loss_op)
+cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=pred, labels=y))
+optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(cost)
 
 # Evaluate model
-# correct_pred = tf.reduce_all(tf.equal(tf.round(out_layer), out_person))
-# accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-correct_pred = tf.equal(prediction, Y)
+correct_pred = tf.equal(guess, y)
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-# Initialize the variables (i.e. assign their default value)
-init = tf.global_variables_initializer()
+training_accuracies = []
+validation_accuracies = []
+dropout_rates = []
+train_steps = []
+test_accuracies = []
 
-# Start training
+
+all_input = pickle.load(open('../AdaBoost/pickled_files/all_train_x.p', 'rb'))
+all_results = pickle.load(open('../AdaBoost/pickled_files/all_train_y.p', 'rb'))
+
+training_data, rest_data, training_labels, rest_labels = train_test_split(all_input, all_results, test_size=0.5, random_state=None)
+size_of_train = len(training_data)
+
+validation_data, test_data, validation_labels, test_labels = train_test_split(rest_data, rest_labels, test_size=0.5, random_state=None)
+
+# Launch the graph
 with tf.Session() as sess:
+    for max_accuracy_difference in np.arange(0.3, 1.0, 1):
+        # Initializing the variables
+        init = tf.global_variables_initializer()
+        sess.run(init)
+        dropout_rate = 1.0
 
-    # Run the initializer
-    sess.run(init)
+        for train_step in range(1, train_step + 1):
 
-    raw = pickle.load(open('decay_True_normalized_feature_vec.p','rb'))
-    queries = pickle.load(open('season_tuples.p','rb'))
-    data,labels = prepare(raw, queries)
+            batch_x = np.array(training_data)
+            batch_y = np.split(np.array(training_labels, dtype='f'), len(training_labels))
 
-    eighty_percent_split = int(len(data)*0.8)
+            batch_x_val = np.array(validation_data)
+            batch_y_val = np.split(np.array(validation_labels, dtype='f'), len(validation_labels))
 
-    train_x = data[:eighty_percent_split]
-    train_y = labels[:eighty_percent_split]
-    test_x = data[eighty_percent_split:]
-    test_y = labels[eighty_percent_split:]
+            sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, keep_probability: dropout_rate})
 
-    for step in range(1, epochs + 1):
-        # Run optimization op (backprop)
-        sess.run(train_op, feed_dict={X: train_x, Y: train_y})
-        # print(sess.run(forus, feed_dict={X: train_x, Y: train_y}))
-        # print(sess.run(prediction, feed_dict={X: train_x, Y: train_y}))
-        # quit()
-        if step % display_step == 0 or step == 1:
-            # Calculate batch loss and accuracy
-            loss, acc = sess.run([loss_op, accuracy], feed_dict={X: train_x,
-                                                                 Y: train_y})
-            print("Step " + str(step) + ", Minibatch Loss= " + \
-                  "{:.4f}".format(loss) + ", Training Accuracy= " + \
-                  "{:.3f}".format(acc))
+            loss, training_accuracy = sess.run([cost, accuracy], feed_dict={x: batch_x, y: batch_y, keep_probability: 1.0})
+            validation_accuracy = sess.run(accuracy, feed_dict={x: batch_x_val, y: batch_y_val, keep_probability: 1.0}) #set the keep_probability to keep all the nodes during vailidation
 
-    print("Optimization Finished!")
+            dropout_rate = float(1- ((max(0, (training_accuracy - baseline_accuracy) / (1 - baseline_accuracy))) * min(1,abs(
+                training_accuracy - validation_accuracy)/max_accuracy_difference))) #subtract from 1 in order to get the keep probability
+                #we take the min of 1 and train-val/0.5 because we want a dyanmic range of percent
 
-    # Calculate accuracy
-    print("Testing Accuracy:", \
-          sess.run(accuracy, feed_dict={X: test_x, Y: test_y}))
+            dropout_rates.append(dropout_rate)
+            training_accuracies.append(training_accuracy)
+            validation_accuracies.append(validation_accuracy)
+
+            if train_step == 1 or train_step%display_step == 0:
+                print('Training Step= ' + str(train_step) + ', Minibatch Loss= ' + str(loss) + ', Training Accuracy= ' + str(
+                    training_accuracy) + ', Validation Accuracy= ' + str(validation_accuracy) + ', Keep Probability= ' + str(
+                    dropout_rate))
+
+            if train_step > 2000 or validation_accuracy > 0.95:
+                break
+
+        print('Optimization Finished')
+        print('Max accuracy difference= '+str(max_accuracy_difference))
+        test_data = np.array(test_data)
+        test_labels = np.split(np.array(test_labels, dtype='f'), len(test_labels))
+
+        test_accuracy = sess.run(accuracy, feed_dict={x: test_data, y:test_labels, keep_probability:1.0})
+        print('Testing accuracy= '+str(test_accuracy))
+
+        plt.scatter(train_step, test_accuracy)
+        plt.annotate(str(max_accuracy_difference), xy=(train_step, test_accuracy))
+
+        # plt.scatter(list(range(len(training_accuracies))), training_accuracies, label='Training')
+        # plt.scatter(list(range(len(validation_accuracies))), validation_accuracies, label='Validation')
+        # plt.ylabel('Accuracy')
+        # plt.xlabel('Batch Step')
+        # plt.legend()
+        # plt.show()
+        #
+        # plt.scatter(list(range(len(dropout_rates))), dropout_rates)
+        # plt.ylabel('Keep probabilities')
+        # plt.xlabel('Batch Step')
+        # plt.show()
+
+    plt.xlabel('Batch Step')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.show()
+
