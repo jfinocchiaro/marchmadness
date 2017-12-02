@@ -19,7 +19,7 @@ def shuffle(images, labels):
     labels = np.array(y)
     return images, labels
 
-display_step = 1
+display_step = 15
 NUM_INPUT = 70
 NUM_CLASSES = 1
 keep_probability = tf.placeholder(tf.float32)
@@ -34,7 +34,7 @@ H3 = 2048
 
 LEARNING_RATE = 0.01
 train_step = 100000
-BATCH_SIZE = 100
+BATCH_SIZE = 1000
 
 # Store layers weight & bias
 weights = {
@@ -101,7 +101,18 @@ all_results = pickle.load(open('../AdaBoost/pickled_files/all_train_y.p', 'rb'))
 training_data, rest_data, training_labels, rest_labels = train_test_split(all_input, all_results, test_size=0.5, random_state=None)
 size_of_train = len(training_data)
 
+training_data = np.array(training_data)
+training_labels = np.split(np.array(training_labels, dtype='f'), len(training_labels))
+
 validation_data, test_data, validation_labels, test_labels = train_test_split(rest_data, rest_labels, test_size=0.5, random_state=None)
+
+size_of_val = len(validation_data)
+
+validation_data = np.array(validation_data)
+validation_labels = np.split(np.array(validation_labels, dtype='f'), len(validation_labels))
+
+test_data = np.array(test_data)
+test_labels = np.split(np.array(test_labels, dtype='f'), len(test_labels))
 
 # Launch the graph
 with tf.Session() as sess:
@@ -111,13 +122,27 @@ with tf.Session() as sess:
         sess.run(init)
         dropout_rate = 1.0
 
+
         for train_step in range(1, train_step + 1):
+            end_batch_train_num = int(size_of_train / BATCH_SIZE)
+            end_batch_val_num = int(size_of_val / BATCH_SIZE)
+            batch_step_train = train_step % (end_batch_train_num)
+            batch_step_val = train_step % (end_batch_val_num)
 
-            batch_x = np.array(training_data)
-            batch_y = np.split(np.array(training_labels, dtype='f'), len(training_labels))
+            if batch_step_train == end_batch_train_num - 1:
+                training_data, training_labels = shuffle(training_data, training_labels)
 
-            batch_x_val = np.array(validation_data)
-            batch_y_val = np.split(np.array(validation_labels, dtype='f'), len(validation_labels))
+            batch_x = training_data[BATCH_SIZE*batch_step_train:BATCH_SIZE*(batch_step_train+1)]
+            batch_y = training_labels[BATCH_SIZE * batch_step_train:BATCH_SIZE * (batch_step_train + 1)]
+
+            batch_x_val = validation_data[BATCH_SIZE*batch_step_val:BATCH_SIZE*(batch_step_val+1)]
+            batch_y_val = validation_labels[BATCH_SIZE*batch_step_val:BATCH_SIZE*(batch_step_val+1)]
+
+            # batch_x = np.array(training_data)
+            # batch_y = np.split(np.array(training_labels, dtype='f'), len(training_labels))
+            #
+            # batch_x_val = np.array(validation_data)
+            # batch_y_val = np.split(np.array(validation_labels, dtype='f'), len(validation_labels))
 
             sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, keep_probability: dropout_rate})
 
@@ -142,8 +167,8 @@ with tf.Session() as sess:
 
         print('Optimization Finished')
         print('Max accuracy difference= '+str(max_accuracy_difference))
-        test_data = np.array(test_data)
-        test_labels = np.split(np.array(test_labels, dtype='f'), len(test_labels))
+        # test_data = np.array(test_data)
+        # test_labels = np.split(np.array(test_labels, dtype='f'), len(test_labels))
 
         test_accuracy = sess.run(accuracy, feed_dict={x: test_data, y:test_labels, keep_probability:1.0})
         print('Testing accuracy= '+str(test_accuracy))
