@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from sklearn import preprocessing
 
 def init_feature_vector():
-	dir = "data/"
+	dir = "../data/"
 	detailed_results = str(dir)+"RegularSeasonDetailedResults.csv"
 
 	data = {}
@@ -107,7 +107,7 @@ def add_vector_averages(data, header):
 	return data
 
 def add_seeds(data):
-	seed_data = "data/TourneySeeds.csv"
+	seed_data = "../data/TourneySeeds.csv"
 
 	with open(seed_data, "r") as fi:
 		next(fi)
@@ -182,11 +182,11 @@ def print_feature(feat):
 			print("Season: %s\t| Team: %s\t| %s: %s" % (season, team, feat, data[season][team][feat]))
 
 def load_data():
-	data = pickle.load(open("data.p", "rb"))
+	data = pickle.load(open("pickled_files/data.p", "rb"))
 	return data
 
 def dump_data(data):
-	pickle.dump(data, open("data.p", "wb"))
+	pickle.dump(data, open("pickled_files/data.p", "wb"))
 
 def feature_vectorizor(data, feature_list):
 	feature_vec = {}
@@ -255,7 +255,7 @@ data, header = init_feature_vector()
 #data = load_data()
 
 data = add_vector_averages(data, header)
-data = add_momentum(data, decay_rates[0])
+data = add_momentum(data, decay_rates[3])
 data = add_percentages(data)
 data = add_seeds(data)
 
@@ -263,24 +263,24 @@ dump_data(data)
 print(data["2004"]["1104"])
 
 feature_vec= feature_vectorizor(data, feature_list)
-#feature_vec = pickle.load(open("normalized_feature_vec.p"))
+#feature_vec = pickle.load(open("pickled_files/normalized_feature_vec.p"))
 
-pickle.dump(feature_vec, open("normalized_feature_vec.p", "wb"))
+pickle.dump(feature_vec, open("pickled_files/decay_True_normalized_feature_vec.p", "wb"))
 
-season_file = "data/RegularSeasonDetailedResults.csv"
+season_file = "../data/RegularSeasonDetailedResults.csv"
 results = training_tuples(season_file)
-#results = pickle.load(open("season_tuples.p"))
+#results = pickle.load(open("pickled_files/season_tuples.p"))
 
-pickle.dump(results, open("season_tuples.p", "wb"))
-print(results)
+pickle.dump(results, open("pickled_files/season_tuples.p", "wb"))
+# print(results)
 print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
-bracket_file = "data/TourneyDetailedResults.csv"
+bracket_file = "../data/TourneyDetailedResults.csv"
 results = training_tuples(season_file)
-#results = pickle.load(open("bracket_tuples.p"))
+#results = pickle.load(open("pickled_files/bracket_tuples.p"))
 
-pickle.dump(results, open("bracket_tuples.p", "wb"))
-print(results)
+pickle.dump(results, open("pickled_files/bracket_tuples.p", "wb"))
+# print(results)
 
 #for i in range(len(feature_list)):
 	#print("%s:\t%s" % (feature_list[i], feature_vec["2003"]["1104"][i]))
