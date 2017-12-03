@@ -5,66 +5,103 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.tree import DecisionTreeClassifier
 import pickle
-
-def scorefunc(pred, test_labels):
-    score_count = 0
-    for x in range(len(pred)):
-        if pred[x] == test_labels[x]:
-            score_count += 1
-    return float(score_count) / len(pred)
+import gzip
+import argparse
 
 
-def decisiontree(training_data, training_labels, test_data, test_labels):
-    dt = DecisionTreeClassifier()
-    dt.fit(training_data, training_labels)
+class Numbers:
+    """
+    Class to store Kaggle Competition Data
+    """
 
-    prob_predictions = dt.predict_proba(test_data)
-    print(prob_predictions)
-    predictions = dt.predict(test_data)
-    accuracy = scorefunc(predictions, test_labels)
-    print(accuracy)
+    def __init__(self, train_x_fname, train_y_fname, test_x_fname=None, test_y_fname=None):
+        # Load the dataset
 
+        if test_x_fname is None or test_y_fname is None:
+            # Load the dataset
+            with open(train_x_fname, 'rb') as f:
+                X = pickle.load(f)
+            with open(train_y_fname, 'rb') as f:
+                Y = pickle.load(f)
+            self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-def cross_validate(training_data, training_labels):
-    dt = DecisionTreeClassifier()
-    scores = cross_val_score(training_data, training_labels, cv=5)
-    print(scores.mean())
-    print(scores.std() ** 2)
+        else:
+            with open(train_x_fname, 'rb') as f:
+                train_x = pickle.load(f)
+            with open(train_y_fname, 'rb') as f:
+                train_y = pickle.load(f)
+            self.train_x = train_x
+            self.train_y = train_y
 
-
-
-feat_vectors_file = open('decay_True_normalized_feature_vec.p','rb')
-feat_vectors = pickle.load(feat_vectors_file)
-feat_vectors_file.close()
-
-tuple_file = open('season_tuples.p','rb')
-feat_labels = pickle.load(tuple_file)
-tuple_file.close()
-
-
-
-X = []
-y = []
-j = 0
-for game in feat_labels:
-
-    X.append(list(feat_vectors[game[0]][game[1]]))
-    X[j].extend(list(feat_vectors[game[0]][game[2]]))
-    y.append(game[3])
-    j += 1
+            with open(test_x_fname, 'rb') as f:
+                test_x = pickle.load(f)
+            with open(test_y_fname, 'rb') as f:
+                train_y = pickle.load(f)
+            self.test_x = test_x
+            self.test_y = test_y
 
 
-print(X[0])
+class DecisionTree:
+    def __init__(self,training_data, training_labels, test_data, test_labels):
+        self.dt = DecisionTreeClassifier()
+        self.training_data = training_data
+        self.training_labels = training_labels
+        self.test_data = test_data
+        self.test_labels = test_labels
+
+
+    def train(self):
+        self.dt = self.dt.fit(self.training_data, self.training_labels)
+        #return self.dt
+
+
+    def scorefunc(self):
+        prob_predictions = self.dt.predict_proba(self.test_data)
+        print(prob_predictions)
+        pred = self.dt.predict(self.test_data)
+
+        score_count = 0
+        for x in range(len(pred)):
+            if pred[x] == self.test_labels[x]:
+                score_count += 1
+        accuracy = float(score_count) / len(pred)
+        print(accuracy)
+        return accuracy
+
+
+    def cross_validate(self, cv=5):
+        dt = DecisionTreeClassifier()
+        scores = cross_val_score(self.training_data, self.training_labels, cv=cv)
+        print(scores.mean())
+        print(scores.std() ** 2)
+
+    def saveModel(self, filename='dt.p'):
+        pickle.dump(self.model, open(filename, "wb"))
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Decision Tree Classifier Options')
+    parser.add_argument('--limit', type=int, default=-1,
+                        help='Restrict training to this many examples')
+    args = parser.parse_args()
+
+    # Load the data into memory
+
+
+    train_x_fname = "../AdaBoost/pickled_files/all_train_x.p"
+    train_y_fname = "../AdaBoost/pickled_files/all_train_y.p"
 
 
 
-#y = np.array(y)
-#y.reshape(-1,1)
-#print(X[0])
-#print(y[0])
 
-training_data, test_data, training_labels, test_labels = train_test_split(X, y, test_size=0.2, random_state=42)
+    data = Numbers(train_x_fname, train_y_fname)
+    dt = DecisionTree(data.train_x[:args.limit], data.train_y[:args.limit], data.test_x, data.test_y)
+    dt.train()
+    acc = dt.scorefunc()
+    print(acc)
+    quit()
+    dt.saveModel()
 
-decisiontree(training_data, training_labels, test_data, test_labels)
-quit()
-cross_validate(X,y)
+
+if __name__ == '__main__':
+    main()
