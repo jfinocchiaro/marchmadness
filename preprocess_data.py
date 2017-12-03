@@ -278,6 +278,7 @@ def parse_seeds():
                 bracket_seeds[year] = {}
             if seed not in bracket_seeds[year]:
                 bracket_seeds[year][seed] = team
+                bracket_seeds[year][team] = int(re.findall(r'\d+', seed)[0])
 
     return bracket_seeds
 
