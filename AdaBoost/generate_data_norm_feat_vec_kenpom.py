@@ -120,6 +120,7 @@ print(len(train_x[0]))
 print(train_y[0])
 
 # Dump data to different pickled files
+pickle.dump(new_feature_vec, open('pickled_files/all_feature_vec.p', 'wb'))
 pickle.dump(train_x, open('pickled_files/all_train_x.p', 'wb'))
 pickle.dump(train_y, open('pickled_files/all_train_y.p', 'wb'))
 pickle.dump(training_data, open('pickled_files/train_x.p', 'wb'))
