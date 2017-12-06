@@ -42,16 +42,17 @@ class Numbers:
 
 
 class DecisionTree:
-    def __init__(self,training_data, training_labels, test_data, test_labels):
+    def __init__(self):
         self.dt = DecisionTreeClassifier()
+
+
+
+    def train(self, training_data, training_labels, test_data, test_labels):
         self.training_data = training_data
         self.training_labels = training_labels
         self.test_data = test_data
         self.test_labels = test_labels
-
-
-    def train(self):
-        self.dt = self.dt.fit(self.training_data, self.training_labels)
+        self.dt = self.dt.fit(training_data, training_labels)
         #return self.dt
 
 
@@ -68,6 +69,9 @@ class DecisionTree:
         print(accuracy)
         return accuracy
 
+    def predict(self, test_data):
+        print(self.dt.predict(test_data))
+        self.dt.predict(test_data)
 
     def cross_validate(self, cv=5):
         dt = DecisionTreeClassifier()
@@ -76,7 +80,11 @@ class DecisionTree:
         print(scores.std() ** 2)
 
     def saveModel(self, filename='dt.p'):
-        pickle.dump(self.model, open(filename, "wb"))
+        pickle.dump(self.dt, open(filename, "wb"))
+
+    def load(self, filename='dt.p'):
+        return pickle.load(open(filename, "rb"))
+
 
 
 def main():
@@ -95,12 +103,13 @@ def main():
 
 
     data = Numbers(train_x_fname, train_y_fname)
-    dt = DecisionTree(data.train_x[:args.limit], data.train_y[:args.limit], data.test_x, data.test_y)
-    dt.train()
+    print(len(data.train_x[0]))
+    dt = DecisionTree()
+    dt.train(data.train_x[:args.limit], data.train_y[:args.limit], data.test_x, data.test_y)
     acc = dt.scorefunc()
     print(acc)
-    quit()
     dt.saveModel()
+
 
 
 if __name__ == '__main__':
