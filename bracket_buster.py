@@ -7,17 +7,19 @@ from log_reg.log_reg import LogReg
 
 class BracketBuster():
 	def __init__(self):
-		self.train_x = pickle.load(open("log_reg/train_x.p", 'rb'))
-		self.train_y = pickle.load(open("log_reg/train_y.p", 'rb'))
+		self.train_x = pickle.load(open("AdaBoost/pickled_files/all_train_x.p", 'rb'))
+		self.train_y = pickle.load(open("AdaBoost/pickled_files/all_train_y.p", 'rb'))
 
 		self.bracket_seeds = pickle.load(open("bracket_seeds.p", 'rb'))
 		self.bracket_tuples = pickle.load(open("bracket_tuples.p", 'rb'))
-		
-		self.feature_vec = pickle.load(open("decay_False_normalized_feature_vec.p", 'rb'))
+
+		self.feature_vec = pickle.load(open("AdaBoost/pickled_files/all_feature_vec.p", 'rb'))
 
 	def seed_predict(self, season, team1, team2):
-		seed1 = self.bracket_seeds[season][team1]
-		seed2 = self.bracket_seeds[season][team2]
+		print(self.bracket_seeds[season].keys())
+		seed1 = self.bracket_seeds[season][int(team1)]
+		print(seed1)
+		seed2 = self.bracket_seeds[season][int(team2)]
 		return seed1 > seed2
 
 	def log_reg_predict(self, season, team1, team2):
@@ -40,7 +42,7 @@ class BracketBuster():
 				matchup = self.bracket_tuples[season][game]
 				team1, team2, winner = matchup
 
-				# Add model predicts here 
+				# Add model predicts here
 				prediction = self.seed_predict(season, team1, team2)
 				if prediction == winner:
 					correct_seed_guesses += 1
@@ -52,7 +54,7 @@ class BracketBuster():
 
 			accuracy = float(correct_guesses) / total_guesses
 			print("Season: %s\t| Accuracy: %s" % (season, accuracy))
-				
+
 def main():
 	bb = BracketBuster()
 	bb.test_brackets()
