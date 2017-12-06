@@ -29,7 +29,7 @@ for team in kenpom_data:
     new_team = []
     for i, x in enumerate(team):
         # Only add ranks from the data
-        if i == 1 or (i > 8 and i % 2 != 0):
+        if i == 1 or i > 3:
             if str(x) == 'nan':
                 new_team.append(0)
             else:
