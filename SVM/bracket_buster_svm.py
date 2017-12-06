@@ -23,7 +23,7 @@ class BracketBuster():
 		seed2 = self.bracket_seeds[season][team2]
 		return seed1 > seed2
 
-	def knn_predict(self, season, team1, team2):
+	def svm_predict(self, season, team1, team2):
 		# Initialize external model
 		svm = SVM()
 		svm = svm.load()
@@ -58,7 +58,7 @@ class BracketBuster():
 					correct_seed_guesses += 1
 
 				# Test model
-				prediction = self.knn_predict(season, team1, team2)
+				prediction = self.svm_predict(season, team1, team2)
 				if prediction == winner:
 					correct_model_guesses += 1
 
