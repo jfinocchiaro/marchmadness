@@ -1,4 +1,3 @@
-
 import gzip
 import math
 import pickle
@@ -8,8 +7,8 @@ from collections import Counter, defaultdict
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.datasets import fetch_20newsgroups_vectorized
 
 
 class Numbers:
@@ -19,20 +18,21 @@ class Numbers:
 
     def __init__(self, location):
         # Load the dataset
-        # with gzip.open(location, 'rb') as f:
-        #     train_set, valid_set, test_set = pickle.load(f)
-        newsgroups_train = fetch_20newsgroups_vectorized(subset='train')
-        newsgroups_test = fetch_20newsgroups_vectorized(subset='test')
-        self.train_x = newsgroups_train.data
-        self.train_y = newsgroups_train.target
-        self.test_x = newsgroups_test.data
-        self.test_y = newsgroups_test.target
+        X = pickle.load(open("AdaBoost/pickled_files/all_train_x.p", 'rb'))
+        Y = pickle.load(open("AdaBoost/pickled_files/all_train_y.p", 'rb'))
+
+        training_data, test_data, training_labels, test_labels = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+        self.train_x = training_data
+        self.train_y = training_labels
+        self.test_x = test_data
+        self.test_y = test_labels
 
 class AdaBoost:
     '''
     AdaBoost classifier
     '''
-    def __init__(self, train_x, train_y, test_x, test_y, base_estimator=DecisionTreeClassifier(max_depth=2), n_estimators=50, learning_rate=1.0):
+    def __init__(self, train_x, train_y, test_x, test_y, base_estimator=LogisticRegressionCV(), n_estimators=50, learning_rate=1.0):
         '''
         initialize Adaboost classifier
         '''
@@ -63,29 +63,17 @@ class AdaBoost:
         """
         return self.model.score(self.test_x, self.test_y)
 
-def cv_performance(classifier, x, y, num_folds):
-    """This function evaluates average accuracy in cross validation for a given classifer."""
-    length = len(y)
-    splits = split_cv(length, num_folds)
-    accuracy_array = []
-    accuracy = 1
+    def load(self):
+        return pickle.load(open("adaboost.p", 'rb'))
 
-    for j, split in enumerate(splits):
+    def dump(self):
+        pickle.dump(self.model, open("adaboost.p", 'wb'))
 
-        train_x = np.array([x[i] for i in split.train])
-        train_y = np.array([y[i] for i in split.train])
-
-        test_x = np.array([x[i] for i in split.test])
-        test_y = np.array([y[i] for i in split.test])
-
-        classifier.fit(train_x, train_y)
-        accuracy = classifier.score(test_x, test_y)
-
-        accuracy_array.append(accuracy)
-
-        print(j)
-
-    return np.mean(accuracy_array)
+    def predict(self, x):
+        """
+        evaluates the prediction for a given X
+        """
+        return self.model.predict(x)
 
 
 if __name__ == '__main__':
@@ -112,6 +100,7 @@ if __name__ == '__main__':
     # Perform cross validation on each of the optimal models and show the accuracy
     boost_best_params = {'algorithm': 'SAMME.R', 'learning_rate': 1, 'n_estimators': 50}
     boost = AdaBoost(data.train_x[:args.limit], data.train_y[:args.limit], data.test_x, data.test_y, n_estimators=boost_best_params['n_estimators'], learning_rate=boost_best_params['learning_rate'])
-    boos_acc = cv_performance(boost.model, data.train_x, data.train_y, 5)
+    boost.train()
+    boost_acc = boost.evaluate()
 
     print(boost_acc)
