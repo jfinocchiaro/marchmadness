@@ -28,10 +28,6 @@ class LogReg():
 		predictions = self.l1.predict(test_data)
 		accuracy = accuracy_score(predictions, test_labels)
 
-		self.l1.fit(training_data, training_labels)
-		print("r2/variance: %s" % self.l1.best_score_)
-		print("Residual sum of squares: %.2f" % np.mean(self.l1.predict(test_data) - test_labels) ** 2)
-
 		print(accuracy)
 
 	def train(self, X, Y):
@@ -84,6 +80,7 @@ def main():
 	## Kenpaum
 	X = pickle.load(open("../AdaBoost/pickled_files/all_train_x.p", 'rb'))
 	Y = pickle.load(open("../AdaBoost/pickled_files/all_train_y.p", 'rb'))
+	print(len(X[0]))
 
 	#training_data, test_data, training_labels, test_labels = train_test_split(X, Y, test_size=0.2, random_state=42)
 	#print (len(training_data))
