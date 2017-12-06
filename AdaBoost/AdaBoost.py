@@ -18,8 +18,8 @@ class Numbers:
 
     def __init__(self, location):
         # Load the dataset
-        X = pickle.load(open("AdaBoost/pickled_files/all_train_x.p", 'rb'))
-        Y = pickle.load(open("AdaBoost/pickled_files/all_train_y.p", 'rb'))
+        X = pickle.load(open("pickled_files/all_train_x.p", 'rb'))
+        Y = pickle.load(open("pickled_files/all_train_y.p", 'rb'))
 
         training_data, test_data, training_labels, test_labels = train_test_split(X, Y, test_size=0.2, random_state=42)
 
@@ -32,7 +32,7 @@ class AdaBoost:
     '''
     AdaBoost classifier
     '''
-    def __init__(self, train_x, train_y, test_x, test_y, base_estimator=LogisticRegressionCV(), n_estimators=50, learning_rate=1.0):
+    def __init__(self, train_x=None, train_y=None, test_x=None, test_y=None, base_estimator=LogisticRegressionCV(), n_estimators=50, learning_rate=1.0):
         '''
         initialize Adaboost classifier
         '''
@@ -63,11 +63,17 @@ class AdaBoost:
         """
         return self.model.score(self.test_x, self.test_y)
 
-    def load(self):
-        return pickle.load(open("adaboost.p", 'rb'))
+    def load(self, filename=None):
+        if filename == None:
+            return pickle.load(open("adaboost.p", 'rb'))
+        else:
+            return pickle.load(open(filename, 'rb'))
 
-    def dump(self):
-        pickle.dump(self.model, open("adaboost.p", 'wb'))
+    def dump(self, filename=None):
+        if filename == None:
+            pickle.dump(self.model, open("adaboost.p", 'wb'))
+        else:
+            pickle.dump(self.model, open(filename, 'wb'))
 
     def predict(self, x):
         """
@@ -102,5 +108,6 @@ if __name__ == '__main__':
     boost = AdaBoost(data.train_x[:args.limit], data.train_y[:args.limit], data.test_x, data.test_y, n_estimators=boost_best_params['n_estimators'], learning_rate=boost_best_params['learning_rate'])
     boost.train()
     boost_acc = boost.evaluate()
+    boost.dump()
 
     print(boost_acc)
