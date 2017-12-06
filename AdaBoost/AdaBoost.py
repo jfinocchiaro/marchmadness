@@ -17,7 +17,6 @@ class Numbers:
     """
 
     def __init__(self, location):
-        # Load the dataset
         X = pickle.load(open("pickled_files/all_train_x.p", 'rb'))
         Y = pickle.load(open("pickled_files/all_train_y.p", 'rb'))
 
@@ -47,8 +46,31 @@ class AdaBoost:
         self.learning_rate = learning_rate
         self.base_estimator = base_estimator
 
+        # Store the feature vec, for the indices the training array
+        self.feature_vec = pickle.load(open("pickled_files/all_feature_vec.p", 'rb'))
+
         # Create the model
         self.model = AdaBoostClassifier(self.base_estimator, n_estimators=self.n_estimators, learning_rate=self.learning_rate)
+
+    def train_season(self, season):
+        # Open the whole dataset generated
+        X = pickle.load(open("pickled_files/all_train_x.p", 'rb'))
+        Y = pickle.load(open("pickled_files/all_train_y.p", 'rb'))
+        self.train_x = []
+        self.train_y = []
+
+        # Add only items from the season to the training data
+        index = 0
+        for year in self.feature_vec:
+            if year == season:
+                for i in range(len(self.feature_vec[year])):
+                    self.train_x.append(X[index+i])
+                    self.train_y.append(Y[index+i])
+            index += len(self.feature_vec[year])
+
+        # Rebuild the model
+        self.model = AdaBoostClassifier(self.base_estimator, n_estimators=self.n_estimators, learning_rate=self.learning_rate)
+        self.model.fit(self.train_x, self.train_y)
 
     def train(self):
         """
@@ -65,13 +87,13 @@ class AdaBoost:
 
     def load(self, filename=None):
         if filename == None:
-            return pickle.load(open("adaboost.p", 'rb'))
+            return pickle.load(open("pickled_files/adaboost.p", 'rb'))
         else:
             return pickle.load(open(filename, 'rb'))
 
     def dump(self, filename=None):
         if filename == None:
-            pickle.dump(self.model, open("adaboost.p", 'wb'))
+            pickle.dump(self.model, open("pickled_files/adaboost.p", 'wb'))
         else:
             pickle.dump(self.model, open(filename, 'wb'))
 
