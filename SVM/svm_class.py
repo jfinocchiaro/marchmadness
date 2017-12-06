@@ -3,15 +3,16 @@
 import numpy as np
 import pickle
 
+from sklearn import svm
 from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import accuracy_score
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split, GridSearchCV
 
-class KNN():
+class SVM():
     def __init__(self, num_nei=11):
-        self.l1 = KNeighborsClassifier(n_neighbors=num_nei, algorithm='ball_tree')
+        self.l1 = svm.SVC(C=1000, gamma=0.001, kernel='linear')
 
     def test_model(self, X, Y):
         training_data, test_data, training_labels, test_labels = train_test_split(X, Y, test_size=0.2, random_state=42)
@@ -29,14 +30,13 @@ class KNN():
         print(accuracy)
 
     def train(self, X, Y):
-        parameters = {'fit_intercept':[True, False]}
         self.l1.fit(X, Y)
 
     def load(self):
-        return pickle.load(open("knn.p", 'rb'))
+        return pickle.load(open("svm.p", 'rb'))
 
     def dump(self):
-        pickle.dump(self.l1, open("knn.p", 'wb'))
+        pickle.dump(self.l1, open("svm.p", 'wb'))
 
     def predict(self, x):
         prediction = self.l1.predict(x)
@@ -82,7 +82,7 @@ def main():
 
 	#training_data, test_data, training_labels, test_labels = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-    lr = KNN()
+    lr = SVM()
     lr.test_model(X, Y)
     lr.dump()
 

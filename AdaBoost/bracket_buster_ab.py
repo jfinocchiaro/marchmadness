@@ -4,18 +4,18 @@ import pickle
 import random
 
 ## Remember to include "__init__.py" in the folders with your models
-from log_reg.log_reg import LogReg
-from AdaBoost.AdaBoost import AdaBoost
+#from log_reg.log_reg import LogReg
+from AdaBoost import AdaBoost
 
 class BracketBuster():
 	def __init__(self):
-		self.train_x = pickle.load(open("AdaBoost/pickled_files/all_train_x.p", 'rb'))
-		self.train_y = pickle.load(open("AdaBoost/pickled_files/all_train_y.p", 'rb'))
+		self.train_x = pickle.load(open("pickled_files/all_train_x.p", 'rb'))
+		self.train_y = pickle.load(open("pickled_files/all_train_y.p", 'rb'))
 
-		self.bracket_seeds = pickle.load(open("bracket_seeds.p", 'rb'))
-		self.bracket_tuples = pickle.load(open("bracket_tuples.p", 'rb'))
+		self.bracket_seeds = pickle.load(open("../bracket_seeds.p", 'rb'))
+		self.bracket_tuples = pickle.load(open("../bracket_tuples.p", 'rb'))
 
-		self.feature_vec = pickle.load(open("AdaBoost/pickled_files/all_feature_vec.p", 'rb'))
+		self.feature_vec = pickle.load(open("pickled_files/all_feature_vec.p", 'rb'))
 
 	def seed_predict(self, season, team1, team2):
 		#print("season: %s" % season)
@@ -38,8 +38,8 @@ class BracketBuster():
 
 	def adaboost_predict(self, season, team1, team2):
 		# Initialize external model
-		boost = LogReg()
-		boost = boost.load()
+		boost = AdaBoost()
+		boost = boost.load('adaboost.p')
 
 		# Load feature vecs for each team
 		#print("season: %s" % season)
