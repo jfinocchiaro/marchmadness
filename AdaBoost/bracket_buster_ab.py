@@ -2,6 +2,7 @@
 
 import pickle
 import random
+import numpy as np
 
 ## Remember to include "__init__.py" in the folders with your models
 #from log_reg.log_reg import LogReg
@@ -54,10 +55,13 @@ class BracketBuster():
 
 
 	def test_brackets(self):
+		seasons_avg_model = []
+		seasons_avg_seed= []
 		for season in self.bracket_tuples:
 			correct_seed_guesses = 0
 			correct_model_guesses = 0
 			total_guesses = 0
+
 			for game in range(len(self.bracket_tuples[season])):
 				total_guesses += 1
 
@@ -70,16 +74,19 @@ class BracketBuster():
 					correct_seed_guesses += 1
 
 				# Test model
-				#prediction = self.log_reg_predict(season, team1, team2)
 				prediction = self.adaboost_predict(season, team1, team2)
 				if prediction == winner:
 					correct_model_guesses += 1
 
 			accuracy = float(correct_seed_guesses) / total_guesses
+			seasons_avg_seed.append(accuracy)
 			print("SEED:\tSeason: %s\t| Accuracy: %s" % (season, accuracy))
 			accuracy = float(correct_model_guesses) / total_guesses
-			# print("LOGREG:\tSeason: %s\t| Accuracy: %s" % (season, accuracy))
-			print("ADABOOST:\tSeason: %s\t| Accuracy: %s" % (season, accuracy))
+			seasons_avg_model.append(accuracy)
+			print("AdaB:\tSeason: %s\t| Accuracy: %s" % (season, accuracy))
+
+		print('SEED Avg acc:  %s\t| Variance:  %s\t| Min:  %s \t|Max:  %s' % (np.mean(seasons_avg_seed), np.var(seasons_avg_seed), min(seasons_avg_seed), max(seasons_avg_seed) ))
+		print('KNN Avg acc:  %s\t| Variance:  %s\t| Min:  %s \t|Max:  %s' % (np.mean(seasons_avg_model), np.var(seasons_avg_model), min(seasons_avg_model), max(seasons_avg_model) ))
 
 def main():
 	bb = BracketBuster()
