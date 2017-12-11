@@ -21,7 +21,7 @@ def shuffle(images, labels):
 
 
 display_step = 15
-NUM_INPUT = 70
+NUM_INPUT = 94
 NUM_CLASSES = 1
 baseline_accuracy = 0.5  # if you were to guess, this assumes an even distribution of the data
 H1 = 2048
@@ -140,6 +140,8 @@ with tf.Session() as sess:
             best_validation = validation_accuracy
             saver.save(sess, '/weights/best_weights.ckpt') #saves the best weights we have seen
 
+        average_accuracy = (training_accuracy + validation_accuracy) / 2.0 #so the dropout formula is a bit easier to read
+        
         dropout_rate = (dropout_rate + float(
             1 - ((max(0, (training_accuracy - baseline_accuracy) / float(1 - baseline_accuracy))) * min(1, abs(
                 training_accuracy - validation_accuracy) / float(
