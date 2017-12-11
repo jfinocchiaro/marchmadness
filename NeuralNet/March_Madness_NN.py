@@ -138,7 +138,7 @@ with tf.Session() as sess:
                                                             keep_probability: 1.0})  # set the keep_probability to keep all the nodes during vailidation
         if validation_accuracy >= best_validation:
             best_validation = validation_accuracy
-            saver.save(sess, '/weights/best_weights.ckpt') #saves the best weights we have seen
+            saver.save(sess, './my-model') #saves the best weights we have seen
 
         average_accuracy = (training_accuracy + validation_accuracy) / 2.0 #so the dropout formula is a bit easier to read
 
@@ -163,7 +163,9 @@ with tf.Session() as sess:
             break
 
     print('Optimization Finished')
-    saver.restore(sess, '/weights/best_weights.ckpt')  # restore the best session weights
+    # saver.restore(sess, '/weights/best_weights.ckpt')  # restore the best session weights
+    new_saver = tf.train.import_meta_graph('./my-model.meta')
+    new_saver.restore(sess, tf.train.latest_checkpoint('./'))
 
     test_accuracy = sess.run(accuracy, feed_dict={x: test_data, y: test_labels, keep_probability: 1.0})
     print('Testing accuracy= ' + str(test_accuracy))
