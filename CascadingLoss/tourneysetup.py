@@ -64,9 +64,10 @@ def calc_ground_truth():
                 ground_truth[season] = {}
 
 
-            for i, game in enumerate(matchups[season]):
+            for game in (bracket_tuples[season]):
+                print(game)
 
-                if (bracket_tuples[season][i][2] == 0):
+                if (bracket_tuples[season][i][2] == 1):
                     winner = bracket_tuples[season][i][0]
                 else:
                     winner = bracket_tuples[season][i][1]
@@ -100,9 +101,10 @@ def perform_predictions():
     seeds = pickle.load(open('../bracket_seeds.p', 'rb'))
     team_list = pickle.load(open('../data/team_list.p', 'rb'))
     feature_vec = pickle.load(open("../AdaBoost/pickled_files/all_feature_vec.p", 'rb'))
+    ground_truth = pickle.load(open('../data/tourney_gt_by_round.p', 'rb'))
 
-    boost = LogReg()
-    boost = pickle.load(open("../log_reg/log_reg.p", 'rb'))
+    lr = LogReg()
+    lr = pickle.load(open("../log_reg/log_reg.p", 'rb'))
 
 
     bracket = {}
@@ -111,48 +113,53 @@ def perform_predictions():
 
 
     for season in matchups:
-        if int(season) >= 2002:
+        if int(season) > 2002:
             print ('Season: %s' % season)
             N_GAMES = len(matchups[season].values())
             i = 0
-            prev_i = 1
             if season not in predictions.keys():
                 predictions[season] = {}
 
-            while(i != prev_i):
-                #if i > 0:
-                    #quit()
-                prev_i = i
+            while(i <= N_GAMES):
+
                 print('i:  %s' % i)
                 for game, teams in matchups[season].items():
                     team1 = teams[0]
                     team2 = teams[1]
                     game_id = game
-                    #print (team1)
+                    #print ('Team 1 %s' %team1)
+                    #print ('Team 2 %s' % team2)
+
+                    #print('Game number %s' % game)
+
                     #print(team1 in team_list)
 
                     #we can actually predict this game
                     if team1 in team_list and team2 in team_list:
-                        pred_winner = random.randint(0,1)
+
                         try:
                             x_vec = list(feature_vec[season][team1]) + list(feature_vec[season][team2])
 
-                            pred_winner = boost.predict([x_vec])[0]
-                            #print(pred_winner)
-
-                            for n_game, n_teams in matchups[season].items():
-                                if game_id in n_teams:
-                                    ind = matchups[season][n_game].index(game_id)
-                                    game_tup = list(matchups[season][n_game])
-                                    game_tup[ind] = teams[pred_winner]
-                                    predictions[season][game_id] = teams[pred_winner]
-                                    matchups[season][n_game] = tuple(game_tup)
-                                    i += 1
-
+                            pred_winner = lr.predict([x_vec])[0]
+                            #print('Pred winner %s' % teams[pred_winner])
+                            #print('Actual winner %s' % ground_truth[season][game_id])
                         except:
-                            print('Skipped a game!')
+                            print('Skipped a game!!')
+                            pred_winner = random.randint(0,1)
 
 
+
+                        for n_game, n_teams in matchups[season].items():
+                            if game_id in n_teams:
+                                ind = matchups[season][n_game].index(game_id)
+                                game_tup = list(matchups[season][n_game])
+                                game_tup[ind] = teams[pred_winner]
+                                predictions[season][game_id] = teams[pred_winner]
+                                matchups[season][n_game] = tuple(game_tup)
+                                i += 1
+
+
+    print ('2009 Champ:  %s' % predictions['2009']['R6CH'])
 
     return matchups, predictions
 
@@ -171,13 +178,12 @@ def calc_acc(predictions):
 
             for game in ground_truth[season].keys():
                 try:
-
                     if predictions[season][game] == ground_truth[season][game]:
                         total_right += 1
                     total_games += 1
                 except:
                     pass
-                quit()
+
             avg_acc.append(float(total_right) / total_games)
 
     print (avg_acc)
@@ -187,7 +193,8 @@ def calc_acc(predictions):
 
 
 if __name__ == '__main__':
+    #write_teams()
     #read_in_tourney_slots()
     #calc_ground_truth()
     matchups, predictions = perform_predictions()
-    calc_acc(predictions)
+    #calc_acc(predictions)
