@@ -20,17 +20,17 @@ def shuffle(images, labels):
     return images, labels
 
 
-display_step = 15
+display_step = 100
 NUM_INPUT = 94
 NUM_CLASSES = 1
 baseline_accuracy = 0.5  # if you were to guess, this assumes an even distribution of the data
 H1 = 2048
-H2 = 1024
+H2 = 2048
 H3 = 2048
 
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.01
 train_step = 100000
-BATCH_SIZE = 100
+BATCH_SIZE = 1200
 
 # Store layers weight & bias
 weights = {
@@ -141,11 +141,12 @@ with tf.Session() as sess:
             saver.save(sess, '/weights/best_weights.ckpt') #saves the best weights we have seen
 
         average_accuracy = (training_accuracy + validation_accuracy) / 2.0 #so the dropout formula is a bit easier to read
-        
+
         dropout_rate = (dropout_rate + float(
             1 - ((max(0, (training_accuracy - baseline_accuracy) / float(1 - baseline_accuracy))) * min(1, abs(
                 training_accuracy - validation_accuracy) / float(
                 1 - average_accuracy))))) / 2.0  # average of old dropout rate and the proposed one
+
 
         dropout_rates.append(dropout_rate)
         training_accuracies.append(training_accuracy)
